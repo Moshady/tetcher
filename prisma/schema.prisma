@@ -1,0 +1,467 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── User ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id              String    @id @default(cuid())
+  name            String
+  email           String    @unique
+  passwordHash    String
+  role            Role      @default(USER)
+  avatar          String?
+  emailVerifiedAt DateTime?
+  suspended       Boolean   @default(false)
+  suspendedAt     DateTime?
+  suspendedReason String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  reviews              Review[]
+  reviewReports        ReviewReport[]
+  reports              Report[]
+  teacherRequests      TeacherRequest[]
+  teacherEditRequests  TeacherEditRequest[]
+  auditLogs            AuditLog[]            @relation("AuditLogActor")
+  approvedRequests     TeacherRequest[]      @relation("RequestReviewedByAdmin")
+  approvedEditRequests TeacherEditRequest[]  @relation("EditRequestReviewedByAdmin")
+  verifications        TeacherVerification[]
+  passwordResetTokens  PasswordResetToken[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([token])
+}
+
+// ─── Location Hierarchy ───────────────────────────────────────────────────────
+
+model Governorate {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  nameAr    String
+  createdAt DateTime @default(now())
+  cities    City[]
+
+  @@index([slug])
+}
+
+model City {
+  id            String      @id @default(cuid())
+  slug          String      @unique
+  name          String
+  nameAr        String
+  governorateId String
+  governorate   Governorate @relation(fields: [governorateId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+  areas         Area[]
+
+  @@index([slug])
+  @@index([governorateId])
+}
+
+model Area {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  nameAr    String
+  cityId    String
+  city      City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([slug])
+  @@index([cityId])
+}
+
+// ─── Subject / Education ─────────────────────────────────────────────────────
+
+model Subject {
+  id              String           @id @default(cuid())
+  slug            String           @unique
+  name            String
+  nameAr          String
+  icon            String?
+  description     String?
+  createdAt       DateTime         @default(now())
+  teacherSubjects TeacherSubject[]
+
+  @@index([slug])
+}
+
+model EducationLevel {
+  id                     String                  @id @default(cuid())
+  slug                   String                  @unique
+  name                   String
+  nameAr                 String
+  order                  Int                     @default(0)
+  createdAt              DateTime                @default(now())
+  grades                 Grade[]
+  teacherEducationLevels TeacherEducationLevel[]
+
+  @@index([slug])
+}
+
+model Grade {
+  id               String          @id @default(cuid())
+  slug             String          @unique
+  name             String
+  nameAr           String
+  order            Int             @default(0)
+  educationLevelId String
+  educationLevel   EducationLevel  @relation(fields: [educationLevelId], references: [id], onDelete: Cascade)
+  createdAt        DateTime        @default(now())
+  teacherGrades    TeacherGrade[]
+
+  @@index([slug])
+  @@index([educationLevelId])
+}
+
+// ─── Teacher ─────────────────────────────────────────────────────────────────
+
+enum TeachingType {
+  ONLINE
+  OFFLINE
+  BOTH
+}
+
+model Teacher {
+  id                String   @id @default(cuid())
+  slug              String   @unique
+  name              String
+  nameAr            String?
+  image             String?
+  bio               String?
+  specialization    String?
+  yearsOfExperience Int?
+  qualifications    String?  // JSON string of qualifications array
+  teachingType      TeachingType @default(BOTH)
+  verified          Boolean  @default(false)
+  verifiedById      String?
+  verifiedAt        DateTime?
+  featured          Boolean  @default(false)
+  active            Boolean  @default(true)
+  // Future-proof for claim feature
+  claimedByUserId   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  profile              TeacherProfile?
+  teacherSubjects      TeacherSubject[]
+  teacherEducationLevels TeacherEducationLevel[]
+  teacherGrades        TeacherGrade[]
+  teachingLocations    TeachingLocation[]
+  courses              Course[]
+  reviews              Review[]
+  editRequests         TeacherEditRequest[]
+  verifications        TeacherVerification[]
+  reports              Report[]
+
+  @@index([slug])
+  @@index([verified])
+  @@index([featured])
+  @@index([teachingType])
+  @@index([yearsOfExperience])
+  @@index([createdAt])
+}
+
+model TeacherProfile {
+  id                 String   @id @default(cuid())
+  teacherId          String   @unique
+  teacher            Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  phone              String?  // public only if teacher permits
+  email              String?  // public only if teacher permits
+  website            String?
+  facebookUrl        String?
+  youtubeUrl         String?
+  socialLinks        String?  // JSON
+  teachingCenter     String?
+  additionalInfo     String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+// Pivot tables
+model TeacherSubject {
+  id        String   @id @default(cuid())
+  teacherId String
+  subjectId String
+  teacher   Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([teacherId, subjectId])
+  @@index([teacherId])
+  @@index([subjectId])
+}
+
+model TeacherEducationLevel {
+  id               String         @id @default(cuid())
+  teacherId        String
+  educationLevelId String
+  teacher          Teacher        @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  educationLevel   EducationLevel @relation(fields: [educationLevelId], references: [id], onDelete: Cascade)
+  createdAt        DateTime       @default(now())
+
+  @@unique([teacherId, educationLevelId])
+  @@index([teacherId])
+}
+
+model TeacherGrade {
+  id        String   @id @default(cuid())
+  teacherId String
+  gradeId   String
+  teacher   Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  grade     Grade    @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([teacherId, gradeId])
+  @@index([teacherId])
+}
+
+model TeachingLocation {
+  id              String   @id @default(cuid())
+  teacherId       String
+  teacher         Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  label           String   // e.g. "الغردقة – البحر الأحمر"
+  governorateId   String?
+  cityId          String?
+  areaId          String?
+  createdAt       DateTime @default(now())
+
+  @@index([teacherId])
+}
+
+// ─── Courses ─────────────────────────────────────────────────────────────────
+
+model Course {
+  id          String   @id @default(cuid())
+  teacherId   String
+  teacher     Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  price       Float?
+  currency    String   @default("EGP")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([teacherId])
+}
+
+// ─── Teacher Requests ────────────────────────────────────────────────────────
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  NEEDS_INFORMATION
+  DUPLICATE
+}
+
+model TeacherRequest {
+  id                  String        @id @default(cuid())
+  // Submitter info
+  submittedByUserId   String?
+  submittedByUser     User?         @relation(fields: [submittedByUserId], references: [id], onDelete: SetNull)
+  submitterName       String
+  submitterEmail      String
+  submitterContact    String?
+  // Proposed teacher data
+  teacherName         String
+  image               String?
+  bio                 String?
+  subjectsJson        String?       // JSON array of subject IDs/names
+  educationLevelsJson String?
+  gradesJson          String?
+  governorateId       String?
+  cityId              String?
+  areaId              String?
+  governorateName     String?
+  cityName            String?
+  areaName            String?
+  teachingType        TeachingType  @default(BOTH)
+  experience          Int?
+  qualifications      String?
+  teachingLocation    String?
+  contactInformation  String?
+  socialLinks         String?
+  // Status & admin
+  status              RequestStatus @default(PENDING)
+  rejectionReason     String?
+  adminNote           String?
+  reviewedByAdminId   String?
+  reviewedByAdmin     User?         @relation("RequestReviewedByAdmin", fields: [reviewedByAdminId], references: [id], onDelete: SetNull)
+  reviewedAt          DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  // Duplicate link
+  duplicateOfTeacherId String?
+
+  @@index([status])
+  @@index([submittedByUserId])
+  @@index([reviewedByAdminId])
+  @@index([createdAt])
+}
+
+// ─── Teacher Edit Requests ───────────────────────────────────────────────────
+
+enum EditRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model TeacherEditRequest {
+  id                String            @id @default(cuid())
+  teacherId         String
+  teacher           Teacher           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  submittedByUserId String
+  submittedByUser   User              @relation(fields: [submittedByUserId], references: [id], onDelete: Cascade)
+  currentDataJson   String            // snapshot of current teacher data
+  proposedDataJson  String            // proposed changes
+  reason            String?
+  status            EditRequestStatus @default(PENDING)
+  adminNote         String?
+  reviewedByAdminId String?
+  reviewedByAdmin   User?             @relation("EditRequestReviewedByAdmin", fields: [reviewedByAdminId], references: [id], onDelete: SetNull)
+  reviewedAt        DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([teacherId])
+  @@index([status])
+  @@index([submittedByUserId])
+}
+
+// ─── Teacher Verification Log ────────────────────────────────────────────────
+
+model TeacherVerification {
+  id          String   @id @default(cuid())
+  teacherId   String
+  teacher     Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  adminId     String
+  admin       User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  action      String   // VERIFIED | UNVERIFIED | REVIEWED
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  @@index([teacherId])
+  @@index([adminId])
+}
+
+// ─── Reviews ─────────────────────────────────────────────────────────────────
+
+model Review {
+  id         String   @id @default(cuid())
+  teacherId  String
+  teacher    Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating     Int      // 1-5
+  comment    String
+  verified   Boolean  @default(false)  // verified student (course enrollment)
+  approved   Boolean  @default(true)   // admin can hide
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  reports    ReviewReport[]
+
+  @@unique([teacherId, userId])  // one review per teacher per user
+  @@index([teacherId])
+  @@index([userId])
+  @@index([approved])
+  @@index([rating])
+}
+
+// ─── Review Reports ───────────────────────────────────────────────────────────
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  REJECTED
+}
+
+model ReviewReport {
+  id               String       @id @default(cuid())
+  reviewId         String
+  review           Review       @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reportedByUserId String
+  reportedByUser   User         @relation(fields: [reportedByUserId], references: [id], onDelete: Cascade)
+  reason           String       // SPAM | FAKE | OFFENSIVE | INAPPROPRIATE | FALSE_INFO | OTHER
+  details          String?
+  status           ReportStatus @default(PENDING)
+  resolvedAt       DateTime?
+  resolvedByAdminId String?
+  createdAt        DateTime     @default(now())
+
+  @@unique([reviewId, reportedByUserId])
+  @@index([reviewId])
+  @@index([status])
+}
+
+// ─── General Reports ─────────────────────────────────────────────────────────
+
+model Report {
+  id               String       @id @default(cuid())
+  reportedByUserId String
+  reportedByUser   User         @relation(fields: [reportedByUserId], references: [id], onDelete: Cascade)
+  teacherId        String?
+  teacher          Teacher?     @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  entityType       String       // TEACHER | PROFILE_INFO
+  entityId         String
+  reason           String
+  details          String?
+  status           ReportStatus @default(PENDING)
+  adminNote        String?
+  resolvedAt       DateTime?
+  resolvedByAdminId String?
+  createdAt        DateTime     @default(now())
+
+  @@index([status])
+  @@index([entityType])
+  @@index([reportedByUserId])
+}
+
+// ─── Audit Log ───────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorId      String
+  actor        User     @relation("AuditLogActor", fields: [actorId], references: [id], onDelete: Cascade)
+  action       String   // TEACHER_APPROVED | TEACHER_REJECTED | REVIEW_DELETED | USER_SUSPENDED | etc.
+  entityType   String
+  entityId     String
+  metadataJson String?
+  timestamp    DateTime @default(now())
+
+  @@index([actorId])
+  @@index([action])
+  @@index([entityType])
+  @@index([timestamp])
+}
