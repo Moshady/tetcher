@@ -496,78 +496,138 @@ export default function SuggestTeacherForm({ subjects, educationLevels, grades, 
                 </div>
               </div>
 
-              {/* Education Levels with Nested Grades */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">المراحل والصفوف الدراسية *</label>
-                <div className="space-y-3">
-                  {educationLevels.map(level => {
-                    const isLevelSelected = selectedLevels.includes(level.id);
-                    const levelGrades = grades.filter(g => g.educationLevelId === level.id);
+                {/* Education Levels with Nested Grades */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">المراحل والصفوف الدراسية *</label>
+                  <div className="space-y-3">
+                    {educationLevels.map(level => {
+                      const isLevelSelected = selectedLevels.includes(level.id);
+                      const levelGrades = grades.filter(g => g.educationLevelId === level.id);
+                      const selectedLevelGradesCount = levelGrades.filter(g => selectedGrades.includes(g.id)).length;
 
-                    return (
-                      <div
-                        key={level.id}
-                        className={`rounded-2xl border transition-all overflow-hidden ${
-                          isLevelSelected
-                            ? "border-purple-300 bg-purple-50/40 shadow-sm"
-                            : "border-gray-200 bg-white hover:border-purple-200"
-                        }`}
-                      >
-                        {/* Level Header Button */}
+                      const handleGradeToggle = (gradeId: string) => {
+                        const nextSelectedGrades = selectedGrades.includes(gradeId)
+                          ? selectedGrades.filter(id => id !== gradeId)
+                          : [...selectedGrades, gradeId];
+
+                        setSelectedGrades(nextSelectedGrades);
+
+                        // If at least one grade in this level is selected, ensure level is selected
+                        const hasSelectedGradesInLevel = levelGrades.some(g => nextSelectedGrades.includes(g.id));
+                        if (hasSelectedGradesInLevel && !selectedLevels.includes(level.id)) {
+                          setSelectedLevels([...selectedLevels, level.id]);
+                        } else if (!hasSelectedGradesInLevel && selectedLevels.includes(level.id)) {
+                          setSelectedLevels(selectedLevels.filter(id => id !== level.id));
+                        }
+                      };
+
+                      const selectAllGradesInLevel = () => {
+                        const levelGradeIds = levelGrades.map(g => g.id);
+                        if (!selectedLevels.includes(level.id)) {
+                          setSelectedLevels([...selectedLevels, level.id]);
+                        }
+                        setSelectedGrades(Array.from(new Set([...selectedGrades, ...levelGradeIds])));
+                      };
+
+                      const deselectAllGradesInLevel = () => {
+                        const levelGradeIds = levelGrades.map(g => g.id);
+                        setSelectedLevels(selectedLevels.filter(id => id !== level.id));
+                        setSelectedGrades(selectedGrades.filter(id => !levelGradeIds.includes(id)));
+                      };
+
+                      return (
                         <div
-                          onClick={() => handleLevelToggle(level.id)}
-                          className="flex items-center justify-between p-4 cursor-pointer select-none"
+                          key={level.id}
+                          className={`rounded-2xl border transition-all overflow-hidden ${
+                            isLevelSelected
+                              ? "border-purple-300 bg-purple-50/40 shadow-sm"
+                              : "border-gray-200 bg-white hover:border-purple-200"
+                          }`}
                         >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-5 h-5 rounded-md flex items-center justify-center border transition ${
-                              isLevelSelected ? "bg-purple-600 border-purple-600 text-white" : "border-gray-300 bg-white"
-                            }`}>
-                              {isLevelSelected && "✓"}
+                          {/* Level Header Button */}
+                          <div
+                            onClick={() => handleLevelToggle(level.id)}
+                            className="flex items-center justify-between p-4 cursor-pointer select-none"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`w-5 h-5 rounded-md flex items-center justify-center border transition ${
+                                isLevelSelected ? "bg-purple-600 border-purple-600 text-white" : "border-gray-300 bg-white"
+                              }`}>
+                                {isLevelSelected && "✓"}
+                              </div>
+                              <div>
+                                <span className="font-bold text-gray-900 text-base">{level.nameAr}</span>
+                                {isLevelSelected && levelGrades.length > 0 && (
+                                  <span className="text-xs text-purple-600 block font-medium">
+                                    {selectedLevelGradesCount === 0
+                                      ? "حدد الصفوف بالأسفل"
+                                      : `${selectedLevelGradesCount} من ${levelGrades.length} صفوف محددة`}
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            <span className="font-bold text-gray-900 text-base">{level.nameAr}</span>
-                          </div>
-                          <span className="text-xs text-purple-600 font-semibold bg-purple-100 px-2.5 py-1 rounded-full">
-                            {isLevelSelected ? "محددة" : "انقر للتحديد"}
-                          </span>
-                        </div>
-
-                        {/* Nested Grades List */}
-                        {isLevelSelected && levelGrades.length > 0 && (
-                          <div className="px-4 pb-4 pt-1 border-t border-purple-100 bg-white/70">
-                            <span className="block text-xs font-bold text-gray-500 mb-2.5">
-                              حدد الصفوف المطلوبة في {level.nameAr}:
+                            <span className="text-xs text-purple-600 font-semibold bg-purple-100 px-2.5 py-1 rounded-full">
+                              {isLevelSelected ? "محددة ✓" : "انقر للتحديد"}
                             </span>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              {levelGrades.map(grade => {
-                                const isGradeSelected = selectedGrades.includes(grade.id);
-                                return (
-                                  <button
-                                    key={grade.id}
-                                    type="button"
-                                    onClick={() => toggleArray(selectedGrades, setSelectedGrades, grade.id)}
-                                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border transition text-right ${
-                                      isGradeSelected
-                                        ? "bg-purple-700 text-white border-purple-700 shadow-sm"
-                                        : "bg-white text-gray-700 border-gray-200 hover:bg-purple-50"
-                                    }`}
-                                  >
-                                    <div className={`w-4 h-4 rounded flex items-center justify-center border text-[10px] ${
-                                      isGradeSelected ? "bg-white text-purple-700 border-white font-bold" : "border-gray-300 bg-white"
-                                    }`}>
-                                      {isGradeSelected && "✓"}
-                                    </div>
-                                    <span className="truncate">{grade.nameAr}</span>
-                                  </button>
-                                );
-                              })}
-                            </div>
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
+
+                          {/* Nested Grades List */}
+                          {isLevelSelected && levelGrades.length > 0 && (
+                            <div className="px-4 pb-4 pt-2 border-t border-purple-100 bg-white/80">
+                              <div className="flex items-center justify-between mb-2.5">
+                                <span className="text-xs font-bold text-gray-600">
+                                  اختر الصفوف الدراسية في {level.nameAr}:
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={selectAllGradesInLevel}
+                                    className="text-[11px] text-purple-700 font-bold hover:underline"
+                                  >
+                                    تحديد كل الصفوف
+                                  </button>
+                                  <span className="text-gray-300">|</span>
+                                  <button
+                                    type="button"
+                                    onClick={deselectAllGradesInLevel}
+                                    className="text-[11px] text-gray-500 hover:text-red-600 font-medium"
+                                  >
+                                    إلغاء
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {levelGrades.map(grade => {
+                                  const isGradeSelected = selectedGrades.includes(grade.id);
+                                  return (
+                                    <button
+                                      key={grade.id}
+                                      type="button"
+                                      onClick={() => handleGradeToggle(grade.id)}
+                                      className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold border transition text-right ${
+                                        isGradeSelected
+                                          ? "bg-purple-700 text-white border-purple-700 shadow-sm"
+                                          : "bg-white text-gray-700 border-gray-200 hover:bg-purple-50"
+                                      }`}
+                                    >
+                                      <div className={`w-4 h-4 rounded flex items-center justify-center border text-[10px] ${
+                                        isGradeSelected ? "bg-white text-purple-700 border-white font-bold" : "border-gray-300 bg-white"
+                                      }`}>
+                                        {isGradeSelected && "✓"}
+                                      </div>
+                                      <span className="truncate">{grade.nameAr}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
 
               {error && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-700 text-sm text-center">{error}</div>}
             </div>
