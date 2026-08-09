@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, Star, CheckCircle, MapPin, SlidersHorizontal, X, MonitorPlay, Home, RefreshCw } from "lucide-react";
-import { useDebouncedCallback } from "use-debounce";
 
 // We'll use inline debounce since we don't want to depend on use-debounce
 function useDebounce<T extends (...args: Parameters<T>) => void>(fn: T, delay: number) {
@@ -107,12 +106,17 @@ function TeacherCard({ teacher }: { teacher: Teacher }) {
             </div>
           </div>
 
-          {/* Subjects */}
-          {teacher.subjects.length > 0 && (
+          {/* Subjects & Education Levels */}
+          {(teacher.subjects.length > 0 || (teacher.educationLevels && teacher.educationLevels.length > 0)) && (
             <div className="flex flex-wrap gap-1 mt-3">
-              {teacher.subjects.slice(0, 3).map((s) => (
+              {teacher.subjects.map((s) => (
                 <span key={s.id} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">
                   {s.name}
+                </span>
+              ))}
+              {teacher.educationLevels?.map((l) => (
+                <span key={l.id} className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-medium">
+                  {l.name}
                 </span>
               ))}
             </div>

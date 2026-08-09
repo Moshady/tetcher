@@ -8,6 +8,9 @@ import Navbar from "@/components/layout/Navbar";
 import { Search, Star, CheckCircle, MapPin, MonitorPlay, Home, RefreshCw, SlidersHorizontal, X } from "lucide-react";
 import TeachersFiltersAndSearch from "@/components/teacher/TeachersFiltersAndSearch";
 
+import { getOrSeedGovernorates } from "@/lib/data/governorates";
+import { getOrSeedEducationLevels } from "@/lib/data/education";
+
 export const metadata = {
   title: "دليل المعلمين",
   description: "ابحث عن معلمك المثالي من بين أفضل المعلمين في مصر",
@@ -16,8 +19,8 @@ export const metadata = {
 async function getFiltersData() {
   const [subjects, educationLevels, governorates] = await Promise.all([
     prisma.subject.findMany({ orderBy: { nameAr: "asc" } }),
-    prisma.educationLevel.findMany({ orderBy: { order: "asc" } }),
-    prisma.governorate.findMany({ orderBy: { nameAr: "asc" } }),
+    getOrSeedEducationLevels(),
+    getOrSeedGovernorates(),
   ]);
   return { subjects, educationLevels, governorates };
 }
