@@ -1,11 +1,24 @@
 import { PrismaClient, Role, TeachingType } from "@prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import bcrypt from "bcryptjs";
 import path from "path";
 
-const dbPath = path.join(__dirname, "dev.db");
-const adapter = new PrismaBetterSqlite3({ url: `file:${dbPath}` });
-const prisma = new PrismaClient({ adapter });
+let prisma: PrismaClient;
+
+const dbUrl = process.env.DATABASE_URL;
+const isPostgres = dbUrl?.startsWith("postgres") || dbUrl?.startsWith("postgresql");
+
+if (isPostgres) {
+  const { PrismaPg } = require("@prisma/adapter-pg");
+  const { Pool } = require("pg");
+  const pool = new Pool({ connectionString: dbUrl });
+  const adapter = new PrismaPg(pool);
+  prisma = new PrismaClient({ adapter });
+} else {
+  const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
+  const dbPath = path.join(__dirname, "dev.db");
+  const adapter = new PrismaBetterSqlite3({ url: `file:${dbPath}` });
+  prisma = new PrismaClient({ adapter });
+}
 
 
 async function main() {
