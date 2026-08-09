@@ -1,17 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { MetadataRoute } from "next";
 
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-
-  const teachers = await prisma.teacher.findMany({
-    where: { active: true },
-    select: { slug: true, updatedAt: true },
-  });
-
-  const subjects = await prisma.subject.findMany({
-    select: { slug: true },
-  });
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: baseUrl, lastModified: new Date(), changeFrequency: "daily", priority: 1 },
@@ -22,19 +15,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/register`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.3 },
   ];
 
-  const teacherPages: MetadataRoute.Sitemap = teachers.map((t) => ({
-    url: `${baseUrl}/teachers/${t.slug}`,
-    lastModified: t.updatedAt,
-    changeFrequency: "weekly",
-    priority: 0.8,
-  }));
+  try {
+    const [teachers, subjects] = await Promise.all([
+      prisma.teacher.findMany({
+        where: { active: true },
+        select: { slug: true, updatedAt: true },
+      }),
+      prisma.subject.findMany({
+        select: { slug: true },
+      }),
+    ]);
 
-  const subjectPages: MetadataRoute.Sitemap = subjects.map((s) => ({
-    url: `${baseUrl}/teachers?subjectSlug=${s.slug}`,
-    lastModified: new Date(),
-    changeFrequency: "daily",
-    priority: 0.6,
-  }));
+    const teacherPages: MetadataRoute.Sitemap = teachers.map((t) => ({
+      url: `${baseUrl}/teachers/${t.slug}`,
+      lastModified: t.updatedAt,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    }));
 
-  return [...staticPages, ...teacherPages, ...subjectPages];
+    const subjectPages: MetadataRoute.Sitemap = subjects.map((s) => ({
+      url: `${baseUrl}/teachers?subjectSlug=${s.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.6,
+    }));
+
+    return [...staticPages, ...teacherPages, ...subjectPages];
+  } catch {
+    // DB not available at build time — return static pages only
+    return staticPages;
+  }
 }
