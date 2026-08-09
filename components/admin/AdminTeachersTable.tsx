@@ -26,7 +26,14 @@ import {
   GraduationCap,
   Award,
   BookOpen,
+  FileJson,
+  Upload,
+  Download,
+  Loader2,
+  Check,
+  FileCode,
 } from "lucide-react";
+import { importTeachersJsonAction } from "@/lib/actions/teachers";
 
 interface Subject { id: string; nameAr: string; }
 interface EducationLevel { id: string; nameAr: string; }
@@ -118,6 +125,94 @@ export default function AdminTeachersTable({
   const [editGrades, setEditGrades] = useState<string[]>([]);
   const [editLocations, setEditLocations] = useState<string[]>([]);
   const [customLocationInput, setCustomLocationInput] = useState("");
+
+  // JSON Import Modal State
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [importJsonText, setImportJsonText] = useState("");
+  const [importResult, setImportResult] = useState<{
+    importedCount: number;
+    totalCount: number;
+    errors: string[];
+  } | null>(null);
+
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const content = evt.target?.result as string;
+      setImportJsonText(content || "");
+    };
+    reader.readAsText(file);
+  }
+
+  function downloadSampleJson() {
+    const sample = [
+      {
+        nameAr: "أحمد حسن",
+        specialization: "معلم أول رياضيات للثانوية العامة",
+        bio: "خبرة 15 عاماً في تدريس الرياضيات والإحصاء للثانوية العامة والجامعة.",
+        yearsOfExperience: 15,
+        teachingType: "BOTH",
+        verified: true,
+        featured: true,
+        phone: "01001234567",
+        youtubeUrl: "https://youtube.com/@teacher_ahmed",
+        facebookUrl: "https://facebook.com/teacher_ahmed",
+        telegramUrl: "https://t.me/teacher_ahmed",
+        websiteUrl: "https://example.com",
+        subjects: ["الرياضيات"],
+        levels: ["المرحلة الثانوية"],
+        grades: ["الصف الثالث الثانوي (الثانوية العامة)"],
+        locations: ["القاهرة – مدينة نصر", "الجيزة - 6 أكتوبر"]
+      },
+      {
+        nameAr: "سارة إبراهيم",
+        specialization: "دكتورة كيمياء عضوي وغير عضوي",
+        bio: "خريجة كلية العلوم جامعة عين شمس بخبرة 10 سنوات.",
+        yearsOfExperience: 10,
+        teachingType: "ONLINE",
+        verified: true,
+        featured: false,
+        phone: "01112223334",
+        facebookUrl: "https://facebook.com/sara_chem",
+        subjects: ["الكيمياء"],
+        levels: ["المرحلة الثانوية", "المرحلة الجامعية"],
+        grades: ["الصف الأول الثانوي", "الصف الثاني الثانوي", "الصف الثالث الثانوي (الثانوية العامة)"],
+        locations: ["أونلاين عبر زوم"]
+      }
+    ];
+
+    const blob = new Blob([JSON.stringify(sample, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "teachers_sample.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleImportSubmit() {
+    if (!importJsonText.trim()) return;
+
+    startTransition(async () => {
+      const res = await importTeachersJsonAction(importJsonText);
+      if (res.error) {
+        setMessage({ type: "error", text: res.error });
+      } else {
+        setImportResult({
+          importedCount: res.importedCount || 0,
+          totalCount: res.totalCount || 0,
+          errors: res.errors || [],
+        });
+        setMessage({
+          type: "success",
+          text: `تم استيراد ${res.importedCount} من أصل ${res.totalCount} معلم بنجاح! 🎉`,
+        });
+        router.refresh();
+      }
+    });
+  }
 
   function openEditModal(t: TeacherData) {
     setEditingTeacher(t);
@@ -356,6 +451,20 @@ export default function AdminTeachersTable({
           />
           <Search size={18} className="absolute right-3 top-3 text-gray-400" />
         </div>
+
+        {/* Bulk Import JSON Button */}
+        <button
+          type="button"
+          onClick={() => {
+            setImportResult(null);
+            setImportJsonText("");
+            setIsImportOpen(true);
+          }}
+          className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-sm"
+        >
+          <FileJson size={16} />
+          <span>استيراد معلمين من ملف (JSON)</span>
+        </button>
 
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <div className="flex items-center gap-1 bg-gray-50 px-2.5 py-1.5 rounded-xl border border-gray-200">
@@ -849,6 +958,116 @@ export default function AdminTeachersTable({
                 className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-sm disabled:opacity-60"
               >
                 {isPending ? "جاري الحفظ..." : "حفظ والتأكيد"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BULK IMPORT JSON MODAL */}
+      {isImportOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 w-full max-w-2xl shadow-2xl space-y-6">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                  <FileJson size={22} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-gray-900">استيراد مجموعة معلمين من ملف JSON</h2>
+                  <p className="text-xs text-gray-500">قم برفع ملف .json يحتوي على تفاصيل المعلمين لإضافتهم دفعة واحدة</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsImportOpen(false)}
+                className="p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Action buttons: Download Template & File Upload */}
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+              <div>
+                <span className="block text-xs font-bold text-gray-900 mb-0.5">تحميل قالب تجريبي</span>
+                <span className="block text-[11px] text-gray-500">حمل نموذج JSON المنسق الجاهز للتعبئة</span>
+              </div>
+              <button
+                type="button"
+                onClick={downloadSampleJson}
+                className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-gray-100 text-gray-800 border border-gray-200 text-xs font-bold rounded-xl transition shadow-xs"
+              >
+                <Download size={14} className="text-blue-600" />
+                تحميل النموذج (teachers_sample.json)
+              </button>
+            </div>
+
+            {/* Upload File Input */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-gray-700">اختر ملف JSON من جهازك</label>
+              <div className="relative border-2 border-dashed border-gray-200 hover:border-emerald-500 rounded-2xl p-6 text-center transition cursor-pointer bg-gray-50/50">
+                <input
+                  type="file"
+                  accept=".json,application/json"
+                  onChange={handleFileUpload}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
+                <Upload className="mx-auto text-emerald-600 mb-2" size={28} />
+                <span className="text-xs font-bold text-gray-800 block">اضغط هنا لرفع الملف أو اسحبه إلى هنا</span>
+                <span className="text-[11px] text-gray-400">يدعم ملفات JSON فقط (.json)</span>
+              </div>
+            </div>
+
+            {/* JSON Text Area Preview / Direct Paste */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-700">أو قم بلصق نص الـ JSON مباشرة هنا:</label>
+              <textarea
+                value={importJsonText}
+                onChange={(e) => setImportJsonText(e.target.value)}
+                placeholder='[\n  {\n    "nameAr": "أحمد حسن",\n    "specialization": "معلم رياضيات",\n    "phone": "01001234567"\n  }\n]'
+                rows={6}
+                className="w-full p-3 rounded-xl border border-gray-200 font-mono text-xs focus:border-emerald-500 outline-none resize-none bg-slate-900 text-slate-100"
+                dir="ltr"
+              />
+            </div>
+
+            {/* Import Results Feedback */}
+            {importResult && (
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs space-y-2">
+                <div className="flex items-center gap-2 text-emerald-800 font-bold text-sm">
+                  <Check size={18} />
+                  <span>اكتملت عملية الاستيراد: تم إضافة {importResult.importedCount} من {importResult.totalCount} معلم.</span>
+                </div>
+                {importResult.errors.length > 0 && (
+                  <div className="mt-2 text-red-700 space-y-1 bg-white p-3 rounded-xl border border-red-100 max-h-32 overflow-y-auto">
+                    <span className="font-bold block">ملاحظات والتنبيهات:</span>
+                    {importResult.errors.map((err, idx) => (
+                      <p key={idx}>• {err}</p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Modal Controls */}
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => setIsImportOpen(false)}
+                className="px-5 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-xs font-bold hover:bg-gray-50 transition"
+              >
+                إغلاق
+              </button>
+
+              <button
+                type="button"
+                onClick={handleImportSubmit}
+                disabled={isPending || !importJsonText.trim()}
+                className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-sm disabled:opacity-50"
+              >
+                {isPending ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
+                {isPending ? "جاري الاستيراد والمعالجة..." : "بدء استيراد المعلمين"}
               </button>
             </div>
           </div>
