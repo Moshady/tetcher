@@ -128,6 +128,7 @@ export default function AdminTeachersTable({
   const [editLevels, setEditLevels] = useState<string[]>([]);
   const [editGrades, setEditGrades] = useState<string[]>([]);
   const [editLocations, setEditLocations] = useState<string[]>([]);
+  const [editGovernorateId, setEditGovernorateId] = useState("");
   const [customLocationInput, setCustomLocationInput] = useState("");
 
   // JSON Import Modal State
@@ -241,6 +242,17 @@ export default function AdminTeachersTable({
     setEditLevels(t.levelIds || []);
     setEditGrades(t.gradeIds || []);
     setEditLocations(t.locations || []);
+
+    const matchedGov = allGovernorates.find(g => (t.locations || []).some(loc => loc.includes(g.nameAr)));
+    setEditGovernorateId(matchedGov?.id || "");
+  }
+
+  function handleGovernorateChange(govId: string) {
+    setEditGovernorateId(govId);
+    const govObj = allGovernorates.find(g => g.id === govId);
+    if (govObj && !editLocations.includes(govObj.nameAr)) {
+      setEditLocations([govObj.nameAr, ...editLocations]);
+    }
   }
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -888,35 +900,56 @@ export default function AdminTeachersTable({
                 </div>
               </div>
 
-              {/* Physical Teaching Centers */}
+              {/* Governorate & Physical Teaching Centers */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">أماكن ومراكز التدريس الحضوري</label>
-                <div className="flex gap-2 mb-2">
-                  <input
-                    value={customLocationInput}
-                    onChange={(e) => setCustomLocationInput(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addLocation(); } }}
-                    placeholder="إضافة مركز أو فرع..."
-                    className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-blue-500 outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={addLocation}
-                    className="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-2 rounded-xl text-xs font-bold transition"
-                  >
-                    إضافة
-                  </button>
-                </div>
-                {editLocations.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {editLocations.map((loc, idx) => (
-                      <span key={idx} className="bg-slate-100 text-slate-800 text-xs font-semibold px-2.5 py-1 rounded-xl border border-slate-200 flex items-center gap-1">
-                        <MapPin size={12} className="text-teal-600" /> {loc}
-                        <button type="button" onClick={() => removeLocation(idx)} className="text-gray-400 hover:text-red-600 mr-1">×</button>
-                      </span>
-                    ))}
+                <label className="block text-xs font-bold text-gray-700 mb-2">المحافظة الرئيسية وأماكن التدريس</label>
+                <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200 space-y-3">
+                  {/* Governorate picker */}
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-500 mb-1">المحافظة الرئيسية</label>
+                    <select
+                      value={editGovernorateId}
+                      onChange={(e) => handleGovernorateChange(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white focus:border-blue-500 outline-none"
+                    >
+                      <option value="">— اختر المحافظة —</option>
+                      {allGovernorates.map(g => (
+                        <option key={g.id} value={g.id}>{g.nameAr}</option>
+                      ))}
+                    </select>
                   </div>
-                )}
+
+                  {/* Manual location tags */}
+                  <div>
+                    <label className="block text-[11px] font-semibold text-gray-500 mb-1">أماكن ومراكز تدريس إضافية</label>
+                    <div className="flex gap-2 mb-2">
+                      <input
+                        value={customLocationInput}
+                        onChange={(e) => setCustomLocationInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addLocation(); } }}
+                        placeholder="إضافة مركز أو فرع..."
+                        className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-blue-500 outline-none bg-white"
+                      />
+                      <button
+                        type="button"
+                        onClick={addLocation}
+                        className="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-2 rounded-xl text-xs font-bold transition"
+                      >
+                        إضافة
+                      </button>
+                    </div>
+                    {editLocations.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {editLocations.map((loc, idx) => (
+                          <span key={idx} className="bg-white text-slate-800 text-xs font-semibold px-2.5 py-1 rounded-xl border border-slate-200 flex items-center gap-1">
+                            <MapPin size={12} className="text-teal-600" /> {loc}
+                            <button type="button" onClick={() => removeLocation(idx)} className="text-gray-400 hover:text-red-600 mr-1">×</button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Subjects & Levels */}

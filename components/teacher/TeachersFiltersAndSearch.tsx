@@ -66,8 +66,8 @@ function TeachingTypeBadge({ type }: { type: string }) {
 
 function TeacherCard({ teacher }: { teacher: Teacher }) {
   return (
-    <Link href={`/teachers/${teacher.slug}`}>
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm card-hover overflow-hidden h-full flex flex-col">
+    <Link href={`/teachers/${teacher.slug}`} className="block h-full">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm card-hover overflow-hidden h-full flex flex-col active:scale-[0.98] transition-transform">
         {/* Top */}
         <div className="p-5 flex-1">
           <div className="flex items-start gap-4">
@@ -257,7 +257,8 @@ export default function TeachersFiltersAndSearch({
   return (
     <div>
       {/* Search + Controls */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+      <div className="flex flex-col gap-2 mb-4">
+        {/* Row 1: search input */}
         <div className="flex-1 relative">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
@@ -265,7 +266,7 @@ export default function TeachersFiltersAndSearch({
             placeholder="ابحث عن اسم، مادة، أو تخصص..."
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
-            className="w-full pl-4 pr-10 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition"
+            className="w-full pl-4 pr-10 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition text-base"
           />
           {search && (
             <button onClick={() => handleSearch("")} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -273,36 +274,39 @@ export default function TeachersFiltersAndSearch({
             </button>
           )}
         </div>
-        <select
-          value={sort}
-          onChange={(e) => handleFilter("sort", e.target.value)}
-          className="px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700 outline-none focus:border-blue-500"
-        >
-          <option value="featured">الأكثر تميزاً</option>
-          <option value="rating">الأعلى تقييماً</option>
-          <option value="newest">الأحدث</option>
-          <option value="experience">الأكثر خبرة</option>
-          <option value="alphabetical">أبجدي</option>
-        </select>
-        <button
-          onClick={() => setFiltersOpen(!filtersOpen)}
-          className={`flex items-center gap-2 px-4 py-3 rounded-xl border font-medium transition ${
-            hasFilters ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 bg-white text-gray-700"
-          }`}
-        >
-          <SlidersHorizontal size={18} />
-          فلاتر {hasFilters && <span className="w-5 h-5 bg-blue-600 text-white text-xs rounded-full flex items-center justify-center">!</span>}
-        </button>
-        {hasFilters && (
-          <button onClick={clearFilters} className="flex items-center gap-1 px-4 py-3 text-sm text-red-600 rounded-xl border border-red-100 bg-red-50 hover:bg-red-100 transition">
-            <X size={16} /> مسح
+        {/* Row 2: sort + filter controls */}
+        <div className="flex gap-2">
+          <select
+            value={sort}
+            onChange={(e) => handleFilter("sort", e.target.value)}
+            className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 outline-none focus:border-blue-500 text-sm"
+          >
+            <option value="featured">الأكثر تميزاً</option>
+            <option value="rating">الأعلى تقييماً</option>
+            <option value="newest">الأحدث</option>
+            <option value="experience">الأكثر خبرة</option>
+            <option value="alphabetical">أبجدي</option>
+          </select>
+          <button
+            onClick={() => setFiltersOpen(!filtersOpen)}
+            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl border font-medium transition text-sm ${
+              hasFilters ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 bg-white text-gray-700"
+            }`}
+          >
+            <SlidersHorizontal size={16} />
+            فلاتر {hasFilters && <span className="w-4 h-4 bg-blue-600 text-white text-[10px] rounded-full flex items-center justify-center">!</span>}
           </button>
-        )}
+          {hasFilters && (
+            <button onClick={clearFilters} className="flex items-center gap-1 px-3 py-2.5 text-sm text-red-600 rounded-xl border border-red-100 bg-red-50 hover:bg-red-100 transition">
+              <X size={15} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filters Drawer */}
       {filtersOpen && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1.5">المادة الدراسية</label>
             <select value={subjectId} onChange={(e) => handleFilter("subjectId", e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm bg-white outline-none">
@@ -346,7 +350,7 @@ export default function TeachersFiltersAndSearch({
       )}
 
       {/* Results Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
         {loading
           ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
           : teachers.length === 0

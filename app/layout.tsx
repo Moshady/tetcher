@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cairo } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
@@ -6,7 +6,10 @@ import { Toaster } from "@/components/ui/toaster";
 const cairo = Cairo({
   subsets: ["arabic", "latin"],
   variable: "--font-cairo",
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  // Only ship weights actually used – reduces font payload
+  weight: ["400", "600", "700", "900"],
+  display: "swap",
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -22,6 +25,14 @@ export const metadata: Metadata = {
     locale: "ar_EG",
     type: "website",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: "#2563eb",
 };
 
 export default function RootLayout({

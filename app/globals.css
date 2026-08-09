@@ -139,3 +139,72 @@ input[type="number"] {
 .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
 .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ─── Mobile & Performance ──────────────────────────────────────────────────── */
+
+/* Smooth inertia scroll everywhere */
+html {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
+}
+
+/* Ensure full viewport on mobile browsers (address bar height) */
+:root {
+  --vh: 1vh;
+}
+
+/* Minimum tap target size for all interactive elements on mobile */
+@media (max-width: 768px) {
+  button, a, [role="button"] {
+    min-height: 40px;
+    min-width: 40px;
+  }
+
+  /* Remove transform hover effects on touch devices – they feel laggy */
+  .card-hover:hover {
+    transform: none;
+    box-shadow: 0 4px 12px -2px rgba(0,0,0,0.08);
+  }
+
+  /* Better font sizes on mobile */
+  .hero-gradient h1 {
+    font-size: clamp(1.75rem, 7vw, 3rem);
+  }
+
+  /* Make tables horizontally scrollable */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Tighten modal padding on mobile */
+  .modal-body {
+    padding: 1rem;
+  }
+}
+
+/* Content-visibility for off-screen sections – huge perf win */
+section {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 400px;
+}
+
+/* Prevent text size adjustment on orientation change */
+body {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* GPU-accelerated transitions only on non-touch */
+@media (hover: hover) {
+  .card-hover {
+    will-change: transform;
+  }
+}
+
+/* Safe area padding for iPhone notch/home bar */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
