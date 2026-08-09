@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -90,6 +90,10 @@ export default function AdminTeachersTable({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [teachers, setTeachers] = useState<TeacherData[]>(initialTeachers);
+
+  useEffect(() => {
+    setTeachers(initialTeachers);
+  }, [initialTeachers]);
 
   // Search & Filter state
   const [search, setSearch] = useState("");
@@ -336,6 +340,42 @@ export default function AdminTeachersTable({
         setMessage({ type: "error", text: data.error || "حدث خطأ أثناء حفظ تعديلات المعلم" });
         return;
       }
+
+      // Immediately update local teachers list with all new selections
+      const selSubjects = allSubjects.filter((s) => editSubjects.includes(s.id)).map((s) => s.nameAr);
+      const selLevels = allEducationLevels.filter((l) => editLevels.includes(l.id)).map((l) => l.nameAr);
+      const selGrades = allGrades.filter((g) => editGrades.includes(g.id)).map((g) => g.nameAr);
+
+      setTeachers((prev) =>
+        prev.map((t) => {
+          if (t.id !== editingTeacher.id) return t;
+          return {
+            ...t,
+            nameAr: editNameAr,
+            name: editNameAr,
+            image: finalImageUrl,
+            specialization: editSpecialization,
+            bio: editBio,
+            yearsOfExperience: editExperience ? Number(editExperience) : null,
+            teachingType: editTeachingType,
+            verified: editVerified,
+            featured: editFeatured,
+            active: editActive,
+            phone: editPhone,
+            youtubeUrl: editYoutubeUrl,
+            facebookUrl: editFacebookUrl,
+            telegramUrl: editTelegramUrl,
+            websiteUrl: editWebsiteUrl,
+            subjectIds: editSubjects,
+            levelIds: editLevels,
+            gradeIds: editGrades,
+            locations: editLocations,
+            subjects: selSubjects,
+            levels: selLevels,
+            grades: selGrades,
+          };
+        })
+      );
 
       setMessage({ type: "success", text: `تم تحديث بيانات المعلم "${editNameAr}" بنجاح!` });
       setEditingTeacher(null);
