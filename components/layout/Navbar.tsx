@@ -13,6 +13,7 @@ interface NavbarProps {
 const navLinks = [
   { href: "/teachers", label: "المعلمون" },
   { href: "/subjects", label: "المواد" },
+  { href: "/join-teacher", label: "انضم كمعلم" },
   { href: "/suggest-teacher", label: "اقترح معلماً" },
 ];
 

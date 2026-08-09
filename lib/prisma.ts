@@ -12,7 +12,7 @@ if (globalForPrisma.prisma) {
   if (typeof window === "undefined") {
     // Server-side
     const dbUrl = process.env.DATABASE_URL;
-    const isPostgres = dbUrl?.startsWith("postgres") || dbUrl?.startsWith("postgresql");
+    const isPostgres = dbUrl?.startsWith("postgres://") || dbUrl?.startsWith("postgresql://");
 
     if (isPostgres) {
       const { PrismaPg } = require("@prisma/adapter-pg");
@@ -24,12 +24,8 @@ if (globalForPrisma.prisma) {
         log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
       });
     } else {
-      const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
-      const path = require("path");
-      const dbPath = path.join(process.cwd(), "prisma/dev.db");
-      const adapter = new PrismaBetterSqlite3({ url: `file:${dbPath}` });
+      // Standard PrismaClient fallback for PostgreSQL provider
       prismaInstance = new PrismaClient({
-        adapter,
         log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
       });
     }
@@ -44,3 +40,4 @@ export const prisma = prismaInstance;
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
+

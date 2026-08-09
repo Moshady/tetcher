@@ -17,9 +17,10 @@ interface Props {
   grades: Grade[];
   governorates: Governorate[];
   user?: { name?: string | null; email?: string | null } | null;
+  isTeacherSelfRegister?: boolean;
 }
 
-export default function SuggestTeacherForm({ subjects, educationLevels, grades, governorates, user }: Props) {
+export default function SuggestTeacherForm({ subjects, educationLevels, grades, governorates, user, isTeacherSelfRegister }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -114,6 +115,9 @@ export default function SuggestTeacherForm({ subjects, educationLevels, grades, 
         return;
       }
       setError(null);
+      if (isTeacherSelfRegister && !formData.submitterName.trim()) {
+        setFormData(p => ({ ...p, submitterName: p.teacherName }));
+      }
       setStep(3);
       return;
     }
@@ -179,8 +183,14 @@ export default function SuggestTeacherForm({ subjects, educationLevels, grades, 
         <Navbar user={user as never} />
         <div className="max-w-2xl mx-auto px-4 py-20 text-center">
           <div className="text-7xl mb-6">🎉</div>
-          <h2 className="text-2xl font-black text-gray-900 mb-3">شكراً لمساهمتك!</h2>
-          <p className="text-gray-600 mb-8">تم إرسال طلبك بنجاح. سيراجع فريقنا الطلب وسيُضاف المعلم إلى المنصة إن كانت البيانات صحيحة.</p>
+          <h2 className="text-2xl font-black text-gray-900 mb-3">
+            {isTeacherSelfRegister ? "تم إرسال بياناتك بنجاح!" : "شكراً لمساهمتك!"}
+          </h2>
+          <p className="text-gray-600 mb-8">
+            {isTeacherSelfRegister
+              ? "تم استلام طلب تسجيلك بنجاح. ستقوم الإدارة بمراجعة البيانات وتفعيل حسابك كمعلم على المنصة في أقرب وقت."
+              : "تم إرسال طلبك بنجاح. سيراجع فريقنا الطلب وسيُضاف المعلم إلى المنصة إن كانت البيانات صحيحة."}
+          </p>
           <button
             type="button"
             onClick={() => router.push("/teachers")}
@@ -198,13 +208,23 @@ export default function SuggestTeacherForm({ subjects, educationLevels, grades, 
       <Navbar user={user as never} />
       <div className="max-w-2xl mx-auto px-4 py-10">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-black text-gray-900">اقترح معلماً</h1>
-          <p className="text-gray-500 mt-2">ساعد الطلاب الآخرين باقتراح معلم رائع تعرفه</p>
+          <h1 className="text-3xl font-black text-gray-900">
+            {isTeacherSelfRegister ? "تسجيل بيانات معلم جديد" : "اقترح معلماً"}
+          </h1>
+          <p className="text-gray-500 mt-2">
+            {isTeacherSelfRegister
+              ? "أدخل بياناتك كاملة والتخصص والصورة الشخصية لتنضم لأفضل منصة معلمين في مصر"
+              : "ساعد الطلاب الآخرين باقتراح معلم رائع تعرفه"}
+          </p>
         </div>
 
         {/* Progress Steps Header */}
         <div className="flex items-center justify-between mb-8">
-          {["بيانات المعلم والصورة", "المادة والصفوف", "بياناتك"].map((s, i) => (
+          {[
+            isTeacherSelfRegister ? "بياناتك والصورة" : "بيانات المعلم والصورة",
+            "المادة والصفوف",
+            isTeacherSelfRegister ? "بيانات التواصل" : "بياناتك"
+          ].map((s, i) => (
             <div key={i} className="flex items-center flex-1">
               <button
                 type="button"

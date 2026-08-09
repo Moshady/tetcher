@@ -3,11 +3,7 @@ import { z } from "zod";
 export const registerSchema = z.object({
   name: z.string().min(2, "الاسم يجب أن يكون على الأقل حرفين"),
   email: z.string().email("بريد إلكتروني غير صالح"),
-  password: z
-    .string()
-    .min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل")
-    .regex(/[A-Z]/, "يجب أن تحتوي على حرف كبير")
-    .regex(/[0-9]/, "يجب أن تحتوي على رقم"),
+  password: z.string().min(4, "كلمة المرور يجب أن تكون 4 أحرف أو أرقام على الأقل"),
 });
 
 export const loginSchema = z.object({
@@ -48,5 +44,5 @@ export const reportReviewSchema = z.object({
 export const editRequestSchema = z.object({
   teacherId: z.string(),
   reason: z.string().min(5, "يرجى ذكر سبب التعديل"),
-  proposedData: z.record(z.unknown()),
+  proposedData: z.record(z.string(), z.unknown()),
 });

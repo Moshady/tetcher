@@ -107,13 +107,6 @@ export default function LoginPage() {
               إنشاء حساب جديد
             </Link>
           </p>
-
-          {/* Demo credentials */}
-          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 text-center">
-            <strong>للتجربة:</strong> student@tetcher.local / User@1234
-            <br />
-            <strong>مسؤول:</strong> admin@tetcher.local / Admin@1234
-          </div>
         </div>
       </div>
     </div>

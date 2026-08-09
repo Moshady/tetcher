@@ -84,7 +84,7 @@ export default function RegisterPage() {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   required
-                  placeholder="8 أحرف على الأقل"
+                  placeholder="4 أحرف أو أرقام على الأقل"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition pl-10"
                   dir="ltr"
                 />
@@ -96,7 +96,7 @@ export default function RegisterPage() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              <p className="text-xs text-gray-400 mt-1">يجب أن تحتوي على 8 أحرف، حرف كبير، ورقم</p>
+              <p className="text-xs text-gray-400 mt-1">4 أحرف أو أرقام على الأقل (يمكن استخدام الأرقام فقط)</p>
             </div>
 
             <div>
