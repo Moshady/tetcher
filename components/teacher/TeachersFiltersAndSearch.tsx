@@ -74,7 +74,7 @@ function TeacherCard({ teacher }: { teacher: Teacher }) {
           <div className="flex items-start gap-4">
             <div className="relative flex-shrink-0">
               {teacher.image ? (
-                <Image src={teacher.image} alt={teacher.name} width={72} height={72} className="w-18 h-18 rounded-2xl object-cover" />
+                <Image src={teacher.image} alt={teacher.name} width={72} height={72} className="w-18 h-18 rounded-2xl object-cover" unoptimized />
               ) : (
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center text-white text-2xl font-bold">
                   {teacher.name.charAt(0)}

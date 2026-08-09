@@ -74,6 +74,7 @@ function TeacherCard({ teacher }: { teacher: ReturnType<typeof getHomepageData> 
                 width={64}
                 height={64}
                 className="w-16 h-16 rounded-2xl object-cover"
+                unoptimized
               />
             ) : (
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center">

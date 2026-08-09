@@ -226,6 +226,7 @@ export default async function TeacherProfilePage({
                     width={144}
                     height={144}
                     className="w-full h-full rounded-[22px] object-cover bg-slate-800"
+                    unoptimized
                   />
                 ) : (
                   <div className="w-full h-full rounded-[22px] bg-slate-800 flex items-center justify-center text-white text-5xl font-black">

@@ -540,7 +540,7 @@ export default function AdminTeachersTable({
                         <div className="flex items-center gap-3">
                           <div className="relative w-12 h-12 rounded-2xl overflow-hidden bg-slate-100 border border-gray-200 flex-shrink-0 flex items-center justify-center font-bold text-gray-500 text-lg shadow-sm">
                             {teacher.image ? (
-                              <Image src={teacher.image} alt={name} fill className="object-cover" />
+                              <Image src={teacher.image} alt={name} fill className="object-cover" unoptimized />
                             ) : (
                               <span>{name.charAt(0)}</span>
                             )}
@@ -685,7 +685,7 @@ export default function AdminTeachersTable({
                 <div className="flex items-center gap-4">
                   <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-gray-200 border border-gray-300 flex-shrink-0 flex items-center justify-center font-bold text-gray-400 text-2xl">
                     {editImage ? (
-                      <Image src={editImage} alt="معاينة" fill className="object-cover" />
+                      <Image src={editImage} alt="معاينة" fill className="object-cover" unoptimized />
                     ) : (
                       <Camera size={24} />
                     )}
