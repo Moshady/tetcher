@@ -494,7 +494,7 @@ export default function AdminTeachersTable({
 
       {/* Filter & Search Controls Bar */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-wrap items-center justify-between gap-4">
-        <div className="relative flex-1 min-w-[240px]">
+        <div className="relative flex-1 min-w-0">
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
